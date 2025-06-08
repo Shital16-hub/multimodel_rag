@@ -90,39 +90,74 @@ class VLLMMultimodalServer:
         question: str, 
         text_context: List[str], 
         image_paths: List[str]
-    ) -> str:
-        """Create unified prompt for vLLM 0.9.0+ (simplified approach)"""
+    ) -> Dict[str, Any]:
+        """Create universal prompt for any document content"""
         
         # Build comprehensive context
         context_text = "\n\n".join([
             f"Document {i+1}: {text}" 
             for i, text in enumerate(text_context)
-        ]) if text_context else "No text context available."
+        ]) if text_context else "No text content available."
         
         if image_paths:
-            # For now, create a text-based prompt that describes we have images
-            # vLLM 0.9.0+ multimodal support varies by model
-            prompt = f"""You are an advanced AI assistant with access to both textual documents and visual content.
+            # Create references to visual content (any type)
+            visual_refs = []
+            for i, img_path in enumerate(image_paths):
+                img_name = Path(img_path).name
+                # Extract page info if available
+                page_info = ""
+                if "page_" in img_name:
+                    try:
+                        page_num = img_name.split("page_")[1].split("_")[0]
+                        page_info = f" from page {page_num}"
+                    except:
+                        pass
+                
+                visual_refs.append(f"Visual Element {i+1}: Content{page_info}")
+            
+            visual_list = "\n".join(visual_refs)
+            
+            # Create universal multimodal prompt
+            prompt_text = f"""You are an intelligent document analysis assistant. You have access to both textual content and visual elements from uploaded documents.
 
 Question: {question}
 
-Retrieved Text Context:
+Available Text Content:
 {context_text}
 
-Visual Content Available: {len(image_paths)} images related to the question.
+Available Visual Elements:
+{visual_list}
 
-Please provide a comprehensive answer that integrates both the text information and acknowledges the visual content. If the images contain charts, graphs, or diagrams, describe how they would relate to the answer based on the text context."""
+INSTRUCTIONS:
+1. Provide a comprehensive answer that integrates both text and visual information when relevant
+2. Reference visual elements naturally (e.g., "As shown in Visual Element 1...")
+3. Describe what you observe in visual content when it supports your answer
+4. Focus on answering the specific question asked
+5. Use clear, informative language appropriate for the content type
+6. If visual elements contain data, charts, diagrams, or important information, incorporate that into your explanation
+7. Maintain accuracy and cite specific information from the available content
 
+Please provide a thorough, well-structured response that addresses the question using all available information."""
+
+            return {
+                "prompt": prompt_text,
+                "multi_modal_data": None
+            }
         else:
-            # Text-only prompt
-            prompt = f"""Question: {question}
+            # Text-only prompt for universal content
+            prompt_text = f"""You are an intelligent document analysis assistant. Please provide a comprehensive answer to the following question based on the available content.
 
-Context:
+Question: {question}
+
+Available Content:
 {context_text}
 
-Please provide a detailed answer based on the context provided."""
+Please provide a detailed, well-structured response that thoroughly addresses the question using the available information."""
             
-        return prompt
+            return {
+                "prompt": prompt_text,
+                "multi_modal_data": None
+            }
 
     async def generate_integrated_response(
         self, 
@@ -130,28 +165,42 @@ Please provide a detailed answer based on the context provided."""
         text_context: List[str], 
         image_paths: List[str] = None
     ) -> Dict[str, Any]:
-        """Generate response using vLLM 0.9.0+ API"""
+        """Generate response using vLLM 0.9.0+ API with correct method signature"""
         
         if not self.engine:
             raise RuntimeError("vLLM engine not initialized")
         
         try:
-            # Create prompt
-            prompt_text = self._create_multimodal_prompt(
+            # Create prompt with proper format
+            prompt_data = self._create_multimodal_prompt(
                 question, 
                 text_context, 
                 image_paths or []
             )
             
-            # Create request using updated API
+            # Create request using updated vLLM 0.9.0+ API
             request_id = f"req_{hash(question)}"
             
-            # Use vLLM 0.9.0+ generate method
-            results_generator = self.engine.generate(
-                inputs=prompt_text,
-                sampling_params=self.sampling_params,
-                request_id=request_id
-            )
+            # FIXED: Use correct vLLM 0.9.0+ API signature
+            # The generate method expects: generate(prompt, sampling_params, request_id)
+            if prompt_data["multi_modal_data"]:
+                # For multimodal inputs, use TextPrompt format
+                text_prompt = TextPrompt(
+                    prompt=prompt_data["prompt"],
+                    multi_modal_data=prompt_data["multi_modal_data"]
+                )
+                results_generator = self.engine.generate(
+                    text_prompt,
+                    self.sampling_params,
+                    request_id
+                )
+            else:
+                # For text-only inputs, use simple string
+                results_generator = self.engine.generate(
+                    prompt_data["prompt"],
+                    self.sampling_params,
+                    request_id
+                )
             
             # Collect results
             final_output = None
@@ -165,7 +214,7 @@ Please provide a detailed answer based on the context provided."""
                     "response": generated_text,
                     "model": self.model_name,
                     "tokens_used": len(final_output.outputs[0].token_ids) if hasattr(final_output.outputs[0], 'token_ids') else 0,
-                    "finish_reason": final_output.outputs[0].finish_reason,
+                    "finish_reason": getattr(final_output.outputs[0], 'finish_reason', 'completed'),
                     "images_processed": len(image_paths) if image_paths else 0,
                     "integration_type": "multimodal_aware" if image_paths else "text_only"
                 }

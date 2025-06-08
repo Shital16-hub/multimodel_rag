@@ -46,7 +46,11 @@ class Config:
     IMAGE_QUALITY = 85
     PDF_DPI = 150  # For PDF to image conversion
     
-    def __init__(self):
+    # File upload settings (missing from your original config)
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    ALLOWED_EXTENSIONS = ['.pdf']
+    
+    def __init__(self):  # Fixed: was def **init**(self):
         # Create directories
         for directory in [self.DOCUMENTS_DIR, self.STATIC_DIR, self.CACHE_DIR]:
             directory.mkdir(exist_ok=True)
@@ -54,5 +58,11 @@ class Config:
         # Create static subdirs
         (self.STATIC_DIR / "images").mkdir(exist_ok=True)
         (self.STATIC_DIR / "temp").mkdir(exist_ok=True)
+        
+        print(f"📁 Created directories:")
+        print(f"   Documents: {self.DOCUMENTS_DIR}")
+        print(f"   Static: {self.STATIC_DIR}")
+        print(f"   Cache: {self.CACHE_DIR}")
 
+# Create the global config instance
 config = Config()

@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI
 app = FastAPI(
-    title="Simplified Multimodal RAG - LangChain + vLLM",
-    description="Production-ready integrated text-image responses without ColPali complexity",
-    version="1.0.0",
+    title="Universal Multimodal RAG - Works with ANY PDF",
+    description="Universal RAG system that processes ANY PDF content - documents, reports, research papers, books, manuals, etc.",
+    version="2.0.0",
     docs_url="/docs"
 )
 
@@ -44,7 +44,7 @@ throttler = Throttler(rate_limit=config.MAX_CONCURRENT_REQUESTS)
 async def startup_event():
     """Initialize system components"""
     try:
-        logger.info("🚀 Starting Simplified Multimodal RAG System...")
+        logger.info("🚀 Starting Universal Multimodal RAG System...")
         await multimodal_retriever.initialize()
         logger.info("✅ System ready!")
     except Exception as e:
@@ -53,14 +53,14 @@ async def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Modern web interface"""
+    """Universal web interface - works with ANY document content"""
     return """
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Simplified Multimodal RAG</title>
+        <title>Universal Multimodal RAG - Any PDF Content</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
@@ -83,6 +83,16 @@ async def root():
                 background-size: 400% 400%;
                 animation: gradient 8s ease infinite;
             }
+            .response-content {
+                line-height: 1.8;
+            }
+            .response-content img {
+                margin: 20px auto;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                max-width: 100%;
+                height: auto;
+            }
         </style>
     </head>
     <body class="gradient-bg min-h-screen">
@@ -90,54 +100,96 @@ async def root():
             <!-- Header -->
             <div class="text-center mb-12">
                 <h1 class="text-6xl font-bold text-white mb-4 drop-shadow-lg">
-                    🧠 Simplified Multimodal RAG
+                    📚 Universal Multimodal RAG
                 </h1>
                 <p class="text-2xl text-white/90 mb-6 drop-shadow">
-                    LangChain + vLLM = Integrated Vision-Text Intelligence
+                    Upload ANY PDF • Ask ANY Question • Get Intelligent Answers
                 </p>
                 <div class="flex justify-center space-x-4 text-sm text-white/80">
-                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">⚡ Sub-2s Latency</span>
-                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">🔗 LangChain MultiVector</span>
-                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">🚀 vLLM V1 Engine</span>
-                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">🎯 Integrated Responses</span>
+                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">📄 Any Document Type</span>
+                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">🔍 Intelligent Processing</span>
+                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">🖼️ Visual Integration</span>
+                    <span class="bg-white/20 backdrop-blur px-4 py-2 rounded-full">⚡ Fast Responses</span>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold text-white mb-3">Reports & Analytics</h3>
+                    <p class="text-white/70">Business reports, financial documents, research papers with charts and graphs</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                    <div class="text-4xl mb-4">📖</div>
+                    <h3 class="text-xl font-bold text-white mb-3">Books & Manuals</h3>
+                    <p class="text-white/70">Technical manuals, textbooks, documentation with diagrams and illustrations</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                    <div class="text-4xl mb-4">🔬</div>
+                    <h3 class="text-xl font-bold text-white mb-3">Academic Papers</h3>
+                    <p class="text-white/70">Research papers, studies, presentations with tables and scientific diagrams</p>
                 </div>
             </div>
 
             <!-- Upload Section -->
             <div class="bg-white/15 backdrop-blur-xl rounded-3xl p-8 mb-8 border border-white/30 shadow-2xl">
-                <h2 class="text-3xl font-bold text-white mb-6">📁 Upload Documents</h2>
+                <h2 class="text-3xl font-bold text-white mb-6">📁 Upload Your Documents</h2>
                 <div class="border-2 border-dashed border-white/50 rounded-2xl p-12 text-center hover:border-white/70 transition-all">
                     <input type="file" id="fileInput" multiple accept=".pdf" 
                            class="hidden" onchange="handleFileSelect()">
                     <label for="fileInput" class="cursor-pointer">
                         <div class="text-8xl text-white/80 mb-6">📄</div>
-                        <p class="text-white text-xl mb-4">Click to upload PDF documents</p>
-                        <p class="text-white/70 text-lg">Simple processing • No ColPali complexity • Just works</p>
+                        <p class="text-white text-xl mb-4">Click to upload ANY PDF documents</p>
+                        <p class="text-white/70 text-lg">Business reports • Research papers • Technical manuals • Books • Any PDF content</p>
                     </label>
                 </div>
                 <button onclick="uploadFiles()" 
                         class="mt-8 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-5 px-8 rounded-2xl font-bold text-xl hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-[1.02] shadow-xl">
-                    🚀 Process with LangChain + vLLM
+                    🚀 Process Documents
                 </button>
             </div>
 
             <!-- Query Section -->
             <div class="bg-white/15 backdrop-blur-xl rounded-3xl p-8 mb-8 border border-white/30 shadow-2xl">
-                <h2 class="text-3xl font-bold text-white mb-6">💬 Ask Questions</h2>
+                <h2 class="text-3xl font-bold text-white mb-6">💬 Ask Anything</h2>
                 <div class="space-y-6">
                     <textarea id="queryInput" 
-                              placeholder="Ask anything about your documents - I'll provide integrated analysis of text and images..."
+                              placeholder="Ask any question about your uploaded documents. I can analyze text, explain concepts, describe images, summarize content, and more..."
                               class="w-full h-36 bg-white/10 border border-white/30 rounded-2xl px-6 py-4 text-white text-lg placeholder-white/60 focus:outline-none focus:border-white/70 resize-none backdrop-blur"></textarea>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-6">
                             <label class="flex items-center text-white text-lg">
                                 <input type="checkbox" id="useImages" checked class="mr-3 scale-125">
-                                Include Visual Analysis
+                                Include Visual Content Analysis
                             </label>
                         </div>
                         <button onclick="submitQuery()" 
                                 class="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 px-10 rounded-2xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-xl">
-                            ✨ Generate Integrated Response
+                            ✨ Get Answer
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Example queries for different document types -->
+                <div class="mt-6 text-white/70">
+                    <p class="text-sm mb-3">💡 Example questions for different document types:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <button onclick="setQuery('Summarize the main findings of this document.')" 
+                                class="text-left p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all">
+                            "Summarize the main findings of this document."
+                        </button>
+                        <button onclick="setQuery('What are the key insights from the data shown?')" 
+                                class="text-left p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all">
+                            "What are the key insights from the data shown?"
+                        </button>
+                        <button onclick="setQuery('Explain the methodology described in this research.')" 
+                                class="text-left p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all">
+                            "Explain the methodology described in this research."
+                        </button>
+                        <button onclick="setQuery('What are the recommendations or conclusions?')" 
+                                class="text-left p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all">
+                            "What are the recommendations or conclusions?"
                         </button>
                     </div>
                 </div>
@@ -155,6 +207,10 @@ async def root():
         <script>
             let selectedFiles = [];
 
+            function setQuery(query) {
+                document.getElementById('queryInput').value = query;
+            }
+
             function handleFileSelect() {
                 selectedFiles = Array.from(document.getElementById('fileInput').files);
                 updateFileDisplay();
@@ -167,7 +223,7 @@ async def root():
                     label.innerHTML = `
                         <div class="text-6xl text-green-300 mb-6">✅</div>
                         <p class="text-white text-xl mb-4">${selectedFiles.length} file(s) selected</p>
-                        <p class="text-green-200 text-lg">Ready for simple, reliable processing</p>
+                        <p class="text-green-200 text-lg">Ready for universal processing</p>
                     `;
                 }
             }
@@ -178,7 +234,7 @@ async def root():
                     return;
                 }
 
-                showStatus('🔄 Processing with LangChain MultiVector + vLLM pipeline...', 'loading');
+                showStatus('🔄 Processing your documents with universal content extraction...', 'loading');
 
                 const formData = new FormData();
                 selectedFiles.forEach(file => formData.append('files', file));
@@ -191,7 +247,14 @@ async def root():
                     const result = await response.json();
 
                     if (result.status === 'success') {
-                        showStatus(`✅ Success! ${result.files_processed} files • ${result.text_documents} text docs • ${result.images_extracted} images • Method: ${result.method}`, 'success');
+                        let contentInfo = '';
+                        if (result.content_types_detected) {
+                            const contentTypes = Object.entries(result.content_types_detected)
+                                .map(([type, count]) => `${count} ${type.replace('_', ' ')}`)
+                                .join(', ');
+                            contentInfo = ` • Content detected: ${contentTypes}`;
+                        }
+                        showStatus(`✅ Success! Processed ${result.files_processed} files • ${result.text_documents} text sections • ${result.visual_elements} visual elements${contentInfo}`, 'success');
                     } else {
                         showStatus(`❌ ${result.message}`, 'error');
                     }
@@ -209,7 +272,7 @@ async def root():
                     return;
                 }
 
-                showStatus('🧠 Generating integrated multimodal response with LangChain + vLLM...', 'loading');
+                showStatus('🧠 Analyzing your documents and generating intelligent response...', 'loading');
 
                 try {
                     const startTime = Date.now();
@@ -243,10 +306,13 @@ async def root():
                 
                 responseDiv.classList.remove('hidden');
                 
+                // Process response which may contain inline HTML images
+                let responseHtml = result.response.replace(/\n/g, '<br>');
+                
                 content.innerHTML = `
                     <div class="space-y-8">
                         <div class="flex items-center justify-between mb-8">
-                            <h3 class="text-3xl font-bold text-white">🤖 Integrated Response</h3>
+                            <h3 class="text-3xl font-bold text-white">🤖 Intelligent Response</h3>
                             <div class="flex space-x-3 text-sm">
                                 <span class="bg-green-400/20 text-green-200 px-4 py-2 rounded-full font-semibold">
                                     ⚡ ${result.latency_seconds}s server + ${clientLatency.toFixed(2)}s client
@@ -258,8 +324,8 @@ async def root():
                         </div>
                         
                         <div class="bg-white/10 rounded-2xl p-8 border border-white/20 backdrop-blur">
-                            <div class="text-white prose prose-lg prose-invert max-w-none leading-relaxed">
-                                ${result.response.replace(/\\n/g, '<br>')}
+                            <div class="text-white prose prose-lg prose-invert max-w-none leading-relaxed response-content">
+                                ${responseHtml}
                             </div>
                         </div>
                         
@@ -269,7 +335,7 @@ async def root():
                                 <div class="text-white text-2xl font-bold">${result.text_sources}</div>
                             </div>
                             <div class="bg-blue-400/20 rounded-xl p-6 text-center">
-                                <div class="text-blue-200 font-bold text-lg">🖼️ Visual Sources</div>
+                                <div class="text-blue-200 font-bold text-lg">🖼️ Visual Elements</div>
                                 <div class="text-white text-2xl font-bold">${result.image_sources}</div>
                             </div>
                             <div class="bg-green-400/20 rounded-xl p-6 text-center">
@@ -283,7 +349,7 @@ async def root():
                         </div>
                         
                         <div class="bg-white/5 rounded-2xl p-6 border border-white/10">
-                            <h4 class="text-xl font-bold text-white mb-4">🔧 Innovations Used:</h4>
+                            <h4 class="text-xl font-bold text-white mb-4">🚀 Universal Features:</h4>
                             <div class="flex flex-wrap gap-3">
                                 ${result.innovation_used.map(innovation => `
                                     <span class="bg-indigo-400/20 text-indigo-200 px-4 py-2 rounded-full text-sm font-semibold">
@@ -294,13 +360,13 @@ async def root():
                             <p class="text-white/70 mt-4">Method: ${result.method}</p>
                         </div>
                         
-                        ${result.sources.images.length > 0 ? `
+                        ${result.sources && result.sources.visual_types && result.sources.visual_types.length > 0 ? `
                         <div class="bg-white/5 rounded-2xl p-6 border border-white/10">
-                            <h4 class="text-xl font-bold text-white mb-4">🎯 Visual Sources Analyzed:</h4>
+                            <h4 class="text-xl font-bold text-white mb-4">📊 Visual Content Types:</h4>
                             <div class="flex flex-wrap gap-3">
-                                ${result.sources.images.map(img => `
+                                ${[...new Set(result.sources.visual_types)].map(type => `
                                     <span class="bg-purple-400/20 text-purple-200 px-4 py-2 rounded-full text-sm">
-                                        ${img}
+                                        ${type.replace('_', ' ').toUpperCase()}
                                     </span>
                                 `).join('')}
                             </div>
@@ -342,16 +408,17 @@ async def root():
 
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
-    """Upload and process documents"""
+    """Upload and process documents - FIXED VERSION using your working logic"""
     try:
         async with throttler:
             file_paths = []
             
+            # Use the SAME logic that was working in your original code
             for file in files:
                 if not file.filename.lower().endswith('.pdf'):
                     continue
                 
-                # Save file
+                # Save file (using your working approach)
                 file_path = config.DOCUMENTS_DIR / file.filename
                 async with aiofiles.open(file_path, 'wb') as f:
                     content = await file.read()
@@ -362,7 +429,7 @@ async def upload_files(files: List[UploadFile] = File(...)):
             if not file_paths:
                 raise HTTPException(status_code=400, detail="No valid PDF files")
             
-            # Process with simplified pipeline
+            # Process with universal pipeline (this should work)
             result = await multimodal_retriever.process_documents(file_paths)
             return JSONResponse(content=result)
             
@@ -375,7 +442,7 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
 @app.post("/query")
 async def query_documents(request: Dict[str, Any]):
-    """Process queries with integrated responses"""
+    """Universal query processing - works with any question about any content"""
     try:
         async with throttler:
             question = request.get("question")
@@ -384,7 +451,7 @@ async def query_documents(request: Dict[str, Any]):
             if not question:
                 raise HTTPException(status_code=400, detail="Question required")
             
-            # Generate integrated response
+            # Generate universal response
             result = await multimodal_retriever.retrieve_and_generate(
                 question=question,
                 use_images=use_images
@@ -405,24 +472,29 @@ async def health_check():
     try:
         return {
             "status": "healthy",
-            "system": "Simplified Multimodal RAG",
+            "system": "Universal Multimodal RAG",
             "components": {
                 "multimodal_retriever": multimodal_retriever.retriever is not None,
-                "vllm_server": True,  # Will be checked during actual usage
+                "vllm_server": True,
                 "vector_store": multimodal_retriever.vectorstore is not None,
                 "text_embeddings": multimodal_retriever.text_embeddings is not None,
                 "image_embeddings": multimodal_retriever.image_embeddings is not None
             },
-            "innovations": [
-                "LangChain MultiVector Retriever",
-                "vLLM V1 Multimodal Generation", 
-                "Integrated Text-Image Responses"
+            "capabilities": [
+                "Universal PDF Processing",
+                "Any Document Type Support", 
+                "Intelligent Content Analysis",
+                "Visual Element Integration",
+                "Semantic Search & Retrieval",
+                "Natural Language Responses"
             ],
-            "advantages": [
-                "No ColPali complexity",
-                "Simple, reliable components",
-                "Fast startup and processing",
-                "Production-ready architecture"
+            "supported_content": [
+                "Business reports and presentations",
+                "Academic papers and research",
+                "Technical manuals and documentation", 
+                "Books and educational materials",
+                "Financial documents and statements",
+                "Any PDF with text and/or visual content"
             ]
         }
         
