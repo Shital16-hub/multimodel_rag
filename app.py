@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI
 app = FastAPI(
     title="Universal Multimodal RAG - Works with ANY PDF",
-    description="Universal RAG system that processes ANY PDF content - documents, reports, research papers, books, manuals, etc.",
+    description="Universal RAG system that processes ANY PDF content",
     version="2.0.0",
     docs_url="/docs"
 )
@@ -45,6 +45,11 @@ async def startup_event():
     """Initialize system components"""
     try:
         logger.info("🚀 Starting Universal Multimodal RAG System...")
+        
+        # Ensure directories exist
+        logger.info(f"📁 Documents dir: {config.DOCUMENTS_DIR}")
+        logger.info(f"📁 Static dir: {config.STATIC_DIR}")
+        
         await multimodal_retriever.initialize()
         logger.info("✅ System ready!")
     except Exception as e:
@@ -53,14 +58,14 @@ async def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Universal web interface - works with ANY document content"""
+    """Universal web interface with COMPLETE JavaScript"""
     return """
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Universal Multimodal RAG - Any PDF Content</title>
+        <title>Universal Multimodal RAG</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
@@ -113,35 +118,16 @@ async def root():
                 </div>
             </div>
 
-            <!-- Features Section -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-                    <div class="text-4xl mb-4">📊</div>
-                    <h3 class="text-xl font-bold text-white mb-3">Reports & Analytics</h3>
-                    <p class="text-white/70">Business reports, financial documents, research papers with charts and graphs</p>
-                </div>
-                <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-                    <div class="text-4xl mb-4">📖</div>
-                    <h3 class="text-xl font-bold text-white mb-3">Books & Manuals</h3>
-                    <p class="text-white/70">Technical manuals, textbooks, documentation with diagrams and illustrations</p>
-                </div>
-                <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-                    <div class="text-4xl mb-4">🔬</div>
-                    <h3 class="text-xl font-bold text-white mb-3">Academic Papers</h3>
-                    <p class="text-white/70">Research papers, studies, presentations with tables and scientific diagrams</p>
-                </div>
-            </div>
-
             <!-- Upload Section -->
             <div class="bg-white/15 backdrop-blur-xl rounded-3xl p-8 mb-8 border border-white/30 shadow-2xl">
-                <h2 class="text-3xl font-bold text-white mb-6">📁 Upload Your Documents</h2>
+                <h2 class="text-3xl font-bold text-white mb-6">📁 Upload Documents</h2>
                 <div class="border-2 border-dashed border-white/50 rounded-2xl p-12 text-center hover:border-white/70 transition-all">
                     <input type="file" id="fileInput" multiple accept=".pdf" 
                            class="hidden" onchange="handleFileSelect()">
                     <label for="fileInput" class="cursor-pointer">
                         <div class="text-8xl text-white/80 mb-6">📄</div>
-                        <p class="text-white text-xl mb-4">Click to upload ANY PDF documents</p>
-                        <p class="text-white/70 text-lg">Business reports • Research papers • Technical manuals • Books • Any PDF content</p>
+                        <p class="text-white text-xl mb-4">Click to upload PDF documents</p>
+                        <p class="text-white/70 text-lg">Business reports • Research papers • Any PDF content</p>
                     </label>
                 </div>
                 <button onclick="uploadFiles()" 
@@ -152,10 +138,10 @@ async def root():
 
             <!-- Query Section -->
             <div class="bg-white/15 backdrop-blur-xl rounded-3xl p-8 mb-8 border border-white/30 shadow-2xl">
-                <h2 class="text-3xl font-bold text-white mb-6">💬 Ask Anything</h2>
+                <h2 class="text-3xl font-bold text-white mb-6">💬 Ask Questions</h2>
                 <div class="space-y-6">
                     <textarea id="queryInput" 
-                              placeholder="Ask any question about your uploaded documents. I can analyze text, explain concepts, describe images, summarize content, and more..."
+                              placeholder="Ask any question about your uploaded documents..."
                               class="w-full h-36 bg-white/10 border border-white/30 rounded-2xl px-6 py-4 text-white text-lg placeholder-white/60 focus:outline-none focus:border-white/70 resize-none backdrop-blur"></textarea>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-6">
@@ -171,9 +157,9 @@ async def root():
                     </div>
                 </div>
                 
-                <!-- Example queries for different document types -->
+                <!-- Example queries -->
                 <div class="mt-6 text-white/70">
-                    <p class="text-sm mb-3">💡 Example questions for different document types:</p>
+                    <p class="text-sm mb-3">💡 Example questions:</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                         <button onclick="setQuery('Summarize the main findings of this document.')" 
                                 class="text-left p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all">
@@ -205,17 +191,23 @@ async def root():
         </div>
 
         <script>
+            // Global variables
             let selectedFiles = [];
 
+            // Set query text
             function setQuery(query) {
                 document.getElementById('queryInput').value = query;
             }
 
+            // Handle file selection
             function handleFileSelect() {
+                console.log('File select triggered');
                 selectedFiles = Array.from(document.getElementById('fileInput').files);
+                console.log('Selected files:', selectedFiles);
                 updateFileDisplay();
             }
 
+            // Update file display
             function updateFileDisplay() {
                 const fileInput = document.getElementById('fileInput');
                 const label = fileInput.nextElementSibling;
@@ -223,28 +215,44 @@ async def root():
                     label.innerHTML = `
                         <div class="text-6xl text-green-300 mb-6">✅</div>
                         <p class="text-white text-xl mb-4">${selectedFiles.length} file(s) selected</p>
-                        <p class="text-green-200 text-lg">Ready for universal processing</p>
+                        <p class="text-green-200 text-lg">Ready for processing</p>
                     `;
                 }
             }
 
+            // Upload files
             async function uploadFiles() {
+                console.log('Upload function called');
+                
                 if (selectedFiles.length === 0) {
                     showStatus('Please select files to upload', 'error');
                     return;
                 }
 
-                showStatus('🔄 Processing your documents with universal content extraction...', 'loading');
+                showStatus('🔄 Processing documents...', 'loading');
 
                 const formData = new FormData();
-                selectedFiles.forEach(file => formData.append('files', file));
+                selectedFiles.forEach(file => {
+                    console.log('Adding file to FormData:', file.name);
+                    formData.append('files', file);
+                });
 
                 try {
+                    console.log('Sending upload request...');
                     const response = await fetch('/upload', {
                         method: 'POST',
                         body: formData
                     });
+                    
+                    console.log('Upload response status:', response.status);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${errorText}`);
+                    }
+                    
                     const result = await response.json();
+                    console.log('Upload result:', result);
 
                     if (result.status === 'success') {
                         let contentInfo = '';
@@ -259,10 +267,12 @@ async def root():
                         showStatus(`❌ ${result.message}`, 'error');
                     }
                 } catch (error) {
-                    showStatus(`❌ Upload failed: ${error}`, 'error');
+                    console.error('Upload error:', error);
+                    showStatus(`❌ Upload failed: ${error.message}`, 'error');
                 }
             }
 
+            // Submit query
             async function submitQuery() {
                 const query = document.getElementById('queryInput').value;
                 const useImages = document.getElementById('useImages').checked;
@@ -300,6 +310,7 @@ async def root():
                 }
             }
 
+            // Display response
             function displayResponse(result, clientLatency) {
                 const responseDiv = document.getElementById('response');
                 const content = document.getElementById('responseContent');
@@ -307,7 +318,7 @@ async def root():
                 responseDiv.classList.remove('hidden');
                 
                 // Process response which may contain inline HTML images
-                let responseHtml = result.response.replace(/\n/g, '<br>');
+                let responseHtml = result.response.replace(/\\n/g, '<br>');
                 
                 content.innerHTML = `
                     <div class="space-y-8">
@@ -376,6 +387,7 @@ async def root():
                 `;
             }
 
+            // Show status messages
             function showStatus(message, type) {
                 const statusDiv = document.getElementById('status');
                 const colors = {
@@ -393,6 +405,7 @@ async def root():
 
             // Auto-focus and keyboard shortcuts
             document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded, setting up event handlers');
                 document.getElementById('queryInput').focus();
             });
 
@@ -401,6 +414,9 @@ async def root():
                     submitQuery();
                 }
             });
+
+            // Add debugging
+            console.log('JavaScript loaded successfully');
         </script>
     </body>
     </html>
@@ -408,33 +424,54 @@ async def root():
 
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
-    """Upload and process documents - FIXED VERSION using your working logic"""
+    """FIXED Upload function with enhanced debugging"""
     try:
+        logger.info(f"📤 Received {len(files)} files for upload")
+        
         async with throttler:
             file_paths = []
             
-            # Use the SAME logic that was working in your original code
+            # Create directories if they don't exist
+            config.DOCUMENTS_DIR.mkdir(exist_ok=True)
+            logger.info(f"📁 Documents directory: {config.DOCUMENTS_DIR}")
+            
             for file in files:
+                logger.info(f"📄 Processing file: {file.filename}")
+                
                 if not file.filename.lower().endswith('.pdf'):
+                    logger.warning(f"❌ Skipping non-PDF file: {file.filename}")
                     continue
                 
-                # Save file (using your working approach)
-                file_path = config.DOCUMENTS_DIR / file.filename
-                async with aiofiles.open(file_path, 'wb') as f:
-                    content = await file.read()
-                    await f.write(content)
-                
-                file_paths.append(str(file_path))
+                try:
+                    # Save file
+                    file_path = config.DOCUMENTS_DIR / file.filename
+                    logger.info(f"💾 Saving to: {file_path}")
+                    
+                    async with aiofiles.open(file_path, 'wb') as f:
+                        content = await file.read()
+                        await f.write(content)
+                        logger.info(f"✅ Saved {file.filename} ({len(content)} bytes)")
+                    
+                    file_paths.append(str(file_path))
+                    
+                except Exception as e:
+                    logger.error(f"❌ Failed to save {file.filename}: {e}")
+                    continue
             
             if not file_paths:
-                raise HTTPException(status_code=400, detail="No valid PDF files")
+                logger.error("❌ No valid PDF files processed")
+                raise HTTPException(status_code=400, detail="No valid PDF files uploaded")
             
-            # Process with universal pipeline (this should work)
+            logger.info(f"🔄 Processing {len(file_paths)} files with multimodal retriever")
+            
+            # Process with universal pipeline
             result = await multimodal_retriever.process_documents(file_paths)
+            
+            logger.info(f"✅ Processing complete: {result}")
             return JSONResponse(content=result)
             
     except Exception as e:
-        logger.error(f"Upload error: {e}")
+        logger.error(f"❌ Upload error: {e}")
         return JSONResponse(
             content={"status": "error", "message": str(e)},
             status_code=500
@@ -442,7 +479,7 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
 @app.post("/query")
 async def query_documents(request: Dict[str, Any]):
-    """Universal query processing - works with any question about any content"""
+    """Process queries"""
     try:
         async with throttler:
             question = request.get("question")
@@ -451,16 +488,18 @@ async def query_documents(request: Dict[str, Any]):
             if not question:
                 raise HTTPException(status_code=400, detail="Question required")
             
-            # Generate universal response
+            logger.info(f"❓ Processing query: {question}")
+            
             result = await multimodal_retriever.retrieve_and_generate(
                 question=question,
                 use_images=use_images
             )
             
+            logger.info(f"✅ Query processed successfully")
             return JSONResponse(content=result)
             
     except Exception as e:
-        logger.error(f"Query error: {e}")
+        logger.error(f"❌ Query error: {e}")
         return JSONResponse(
             content={"status": "error", "message": str(e)},
             status_code=500
@@ -476,26 +515,12 @@ async def health_check():
             "components": {
                 "multimodal_retriever": multimodal_retriever.retriever is not None,
                 "vllm_server": True,
-                "vector_store": multimodal_retriever.vectorstore is not None,
-                "text_embeddings": multimodal_retriever.text_embeddings is not None,
-                "image_embeddings": multimodal_retriever.image_embeddings is not None
-            },
-            "capabilities": [
-                "Universal PDF Processing",
-                "Any Document Type Support", 
-                "Intelligent Content Analysis",
-                "Visual Element Integration",
-                "Semantic Search & Retrieval",
-                "Natural Language Responses"
-            ],
-            "supported_content": [
-                "Business reports and presentations",
-                "Academic papers and research",
-                "Technical manuals and documentation", 
-                "Books and educational materials",
-                "Financial documents and statements",
-                "Any PDF with text and/or visual content"
-            ]
+                "directories": {
+                    "documents": config.DOCUMENTS_DIR.exists(),
+                    "static": config.STATIC_DIR.exists(),
+                    "static_images": (config.STATIC_DIR / "images").exists()
+                }
+            }
         }
         
     except Exception as e:
