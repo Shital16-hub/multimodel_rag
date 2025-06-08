@@ -1,0 +1,14 @@
+# Essential only
+langchain
+vllm
+torch
+transformers
+chromadb
+sentence-transformers
+PyMuPDF
+fastapi
+uvicorn
+python-multipart
+Pillow
+numpy
+aiofiles
